@@ -1,0 +1,40 @@
+name: Python CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create .env file
+      run: |
+        echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" >> .env
+        echo "SPREADSHEET_KEY=${{ secrets.SPREADSHEET_KEY }}" >> .env
+      shell: bash
+
+    - name: Create credentials.json file
+      run: |
+        echo "${{ secrets.GCP_CREDENTIALS }}" > credentials.json
+      shell: bash
+
+    - name: Test with unittest
+      run: |
+        python -m unittest discover -s tests
