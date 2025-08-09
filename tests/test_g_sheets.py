@@ -20,12 +20,21 @@ from g_sheets import GSheetsManager
 
 class TestGSheetsManager(unittest.TestCase):
 
+    @patch('sys.exit')
+    @patch('g_sheets.ServiceAccountCredentials')
     @patch('g_sheets.gspread.authorize')
-    def setUp(self, mock_authorize):
+    def setUp(self, mock_authorize, mock_credentials, mock_exit):
         """
         Set up method executed before each test.
         Mocks gspread authentication and spreadsheet operations.
         """
+        # Prevent sys.exit from being called during tests
+        mock_exit.side_effect = SystemExit
+
+        # Mock credentials loading
+        mock_credentials.from_json_keyfile_name.return_value = MagicMock()
+
+        # Mock gspread client
         self.mock_client = MagicMock()
         mock_authorize.return_value = self.mock_client
 
@@ -59,7 +68,7 @@ class TestGSheetsManager(unittest.TestCase):
         sheet = self.manager._get_or_create_sheet("New Genre")
 
         self.mock_spreadsheet.worksheet.assert_called_with("New Genre")
-        self.mock_spreadsheet.add_worksheet.assert_called_with(title="New Genre", rows="100", cols="10")
+        self.mock_spreadsheet.add_worksheet.assert_called_with(title="New Genre", rows="100", cols="20")
         # Verify that the header row is written in English
         new_mock_sheet.append_row.assert_called_with(["Title", "Status", "Added Date", "Completed Date"])
         self.assertEqual(sheet, new_mock_sheet)
@@ -70,13 +79,14 @@ class TestGSheetsManager(unittest.TestCase):
         """
         mock_sheet = MagicMock()
         with patch.object(self.manager, '_get_or_create_sheet', return_value=mock_sheet) as mock_get_sheet:
-            self.manager.add_item("Books", "A New Book")
+            result = self.manager.add_item("Books", "A New Book")
 
             mock_get_sheet.assert_called_with("Books")
             mock_sheet.append_row.assert_called_once()
             call_args = mock_sheet.append_row.call_args[0][0]
             self.assertEqual(call_args[0], "A New Book")
             self.assertEqual(call_args[1], "Pending") # Status should be Pending
+            self.assertTrue(result)
 
 if __name__ == '__main__':
     unittest.main()

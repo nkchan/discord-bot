@@ -11,17 +11,21 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 SPREADSHEET_KEY = os.getenv('SPREADSHEET_KEY')
 CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', 'credentials.json')
 
-# Initialize Bot client and GSheetsManager
-print("Initializing GSheetsManager...")
-sheets_manager = GSheetsManager(CREDENTIALS_PATH, SPREADSHEET_KEY)
-
+# Initialize Bot client
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+# Initialize GSheetsManager as a global variable, to be instantiated on_ready
+sheets_manager = None
+
 # Event handler for when the bot is ready
 @client.event
 async def on_ready():
+    global sheets_manager
+    print("Initializing GSheetsManager...")
+    sheets_manager = GSheetsManager(CREDENTIALS_PATH, SPREADSHEET_KEY)
+    
     print(f'Logged in as {client.user}')
     print("Syncing command tree...")
     await tree.sync()
