@@ -16,17 +16,14 @@ if 'gspread' not in sys.modules:
     sys.modules['gspread'] = gspread
     sys.modules['gspread.exceptions'] = gspread.exceptions
 
-if 'oauth2client.service_account' not in sys.modules:
-    sys.modules['oauth2client.service_account'] = MagicMock()
-
 from g_sheets import GSheetsManager
 
 class TestGSheetsManager(unittest.TestCase):
 
     @patch('sys.exit')
-    @patch('oauth2client.service_account.ServiceAccountCredentials.from_json_keyfile_name')
+    @patch('g_sheets.ServiceAccountCredentials')
     @patch('g_sheets.gspread.authorize')
-    def setUp(self, mock_authorize, mock_from_json, mock_exit):
+    def setUp(self, mock_authorize, mock_credentials, mock_exit):
         """
         Set up method executed before each test.
         Mocks gspread authentication and spreadsheet operations.
@@ -35,7 +32,7 @@ class TestGSheetsManager(unittest.TestCase):
         mock_exit.side_effect = SystemExit
 
         # Mock credentials loading
-        mock_from_json.return_value = MagicMock()
+        mock_credentials.from_json_keyfile_name.return_value = MagicMock()
 
         # Mock gspread client
         self.mock_client = MagicMock()
