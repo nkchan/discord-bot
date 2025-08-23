@@ -1,0 +1,14 @@
+[Unit]
+Description=Discord Bot
+After=network.target
+
+[Service]
+User=nkchan
+Group=nkchan
+WorkingDirectory=/home/nkchan/git/discord-bot
+EnvironmentFile=/home/nkchan/git/discord-bot/.env
+ExecStart=/home/nkchan/git/discord-bot/run.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
