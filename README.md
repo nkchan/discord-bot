@@ -80,6 +80,64 @@ This is a Discord bot that helps you manage various task lists (books to read, p
 
 ---
 
+## Production Deployment with systemd
+
+For running the bot as a persistent background service in a production environment, using `systemd` is recommended. The `run.sh` script and `discord-bot.service` unit file are provided to facilitate this.
+
+### Setup and Usage
+
+Execute these commands in your terminal. Commands requiring `sudo` may prompt for your password.
+
+1.  **Make the `run.sh` script executable:**
+    This script ensures the bot runs in the correct directory and with the correct Python interpreter.
+    ```bash
+    chmod +x run.sh
+    ```
+
+2.  **Copy the service file to the systemd directory:**
+    This registers the bot as a service with the system.
+    ```bash
+    sudo cp discord-bot.service /etc/systemd/system/discord-bot.service
+    ```
+
+3.  **Reload the systemd daemon:**
+    This makes `systemd` aware of the new service.
+    ```bash
+    sudo systemctl daemon-reload
+    ```
+
+4.  **Enable the service:**
+    This ensures the bot will automatically start whenever the server boots up.
+    ```bash
+    sudo systemctl enable discord-bot.service
+    ```
+
+5.  **Start the service:**
+    This starts the bot immediately.
+    ```bash
+    sudo systemctl start discord-bot.service
+    ```
+
+### Managing the Service
+
+-   **Check the status:**
+    To see if the bot is running and view recent logs.
+    ```bash
+    sudo systemctl status discord-bot.service
+    ```
+
+-   **Stop the service:**
+    ```bash
+    sudo systemctl stop discord-bot.service
+    ```
+
+-   **Restart the service:**
+    ```bash
+    sudo systemctl restart discord-bot.service
+    ```
+
+---
+
 ## How to Use the Bot
 
 Use these slash commands in any channel where the bot is present.
