@@ -1,5 +1,6 @@
 # discord_bot.py
 import os
+import sys
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
@@ -10,6 +11,11 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 SPREADSHEET_KEY = os.getenv('SPREADSHEET_KEY')
 CREDENTIALS_PATH = os.getenv('CREDENTIALS_PATH', 'credentials.json')
+GUILD_ID = os.getenv('GUILD_ID')
+
+# Determine command prefix and dev mode based on "dev" argument
+is_dev_mode = "dev" in sys.argv
+command_prefix = "dev-" if is_dev_mode else ""
 
 # Initialize Bot client
 intents = discord.Intents.default()
@@ -27,15 +33,28 @@ async def on_ready():
     sheets_manager = GSheetsManager(CREDENTIALS_PATH, SPREADSHEET_KEY)
     
     print(f'Logged in as {client.user}')
-    print("Syncing command tree...")
-    await tree.sync()
-    print("Command tree synced.")
+    
+    if is_dev_mode:
+        if not GUILD_ID:
+            print("!!! FATAL ERROR: GUILD_ID is not set in .env file for dev mode.")
+            return
+        
+        guild_obj = discord.Object(id=int(GUILD_ID))
+        
+        print(f"DEV MODE: Clearing and syncing commands for guild {GUILD_ID}...")
+        tree.clear_commands(guild=guild_obj)
+        await tree.sync(guild=guild_obj)
+        print("Command tree synced to guild.")
+    else:
+        print("Syncing command tree globally...")
+        await tree.sync()
+        print("Command tree synced globally.")
 
 # `/add` command
-@tree.command(name="add", description="Adds a new item to your list.")
+@tree.command(name=f"{command_prefix}add", description="Adds a new item to your list.")
 @app_commands.describe(genre="The genre of the list", title="The title of the item")
 async def add_item(interaction: discord.Interaction, genre: str, title: str):
-    print(f"Received /add command: genre='{genre}', title='{title}'")
+    print(f"Received /{command_prefix}add command: genre='{genre}', title='{title}'")
     success = sheets_manager.add_item(genre, title)
     if success:
         await interaction.response.send_message(f"Added '{title}' to the **{genre}** list.")
@@ -43,10 +62,10 @@ async def add_item(interaction: discord.Interaction, genre: str, title: str):
         await interaction.response.send_message("Sorry, something went wrong while adding the item. Please check the bot's console for errors.", ephemeral=True)
 
 # `/done` command
-@tree.command(name="done", description="Marks an item as completed.")
+@tree.command(name=f"{command_prefix}done", description="Marks an item as completed.")
 @app_commands.describe(genre="The genre of the list", title="The title of the item")
 async def mark_as_done(interaction: discord.Interaction, genre: str, title: str):
-    print(f"Received /done command: genre='{genre}', title='{title}'")
+    print(f"Received /{command_prefix}done command: genre='{genre}', title='{title}'")
     success = sheets_manager.mark_as_done(genre, title)
     if success:
         await interaction.response.send_message(f"Marked '{title}' in **{genre}** as completed.")
@@ -54,10 +73,10 @@ async def mark_as_done(interaction: discord.Interaction, genre: str, title: str)
         await interaction.response.send_message(f"Could not find or update '{title}'. Please check the title and genre, or see the console for errors.", ephemeral=True)
 
 # `/list` command
-@tree.command(name="list", description="Displays all items from a specified list.")
+@tree.command(name=f"{command_prefix}list", description="Displays all items from a specified list.")
 @app_commands.describe(genre="The genre of the list to display")
 async def get_list(interaction: discord.Interaction, genre: str):
-    print(f"Received /list command: genre='{genre}'")
+    print(f"Received /{command_prefix}list command: genre='{genre}'")
     items = sheets_manager.get_list(genre)
     
     if items is None: # Explicit check for error from get_list
